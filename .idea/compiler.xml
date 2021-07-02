@@ -6,6 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="CrudSecurity" />
+        <module name="UserDataBaseSecurity" />
         <module name="spring_crud_2" />
       </profile>
     </annotationProcessing>

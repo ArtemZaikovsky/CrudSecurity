@@ -1,59 +1,57 @@
 package web.dao;
 
-import org.hibernate.SessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import web.model.Role;
 import web.model.User;
+import web.dao.RoleDAOImpl;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Table;
-import javax.persistence.TypedQuery;
-import javax.transaction.Transactional;
+import javax.persistence.*;
 import java.util.List;
 
-@Repository
-public class UserDaoImpl implements UserDao {
+@Component
+@Transactional
+public class UserDAOImpl implements UserDAO {
+    public UserDAOImpl() {
+    }
 
     @PersistenceContext
-    private EntityManager em;
+    private EntityManager entityManager;
 
     @Override
-    public void addUser(User user) {
-        em.persist(user);
+    public List<User> allUsers() {
+        List<User> resultList = entityManager.createQuery("SELECT u FROM User u", User.class).getResultList();
+        return resultList;
     }
 
+    @Transactional
     @Override
-    public List<User> getAllUser() {
-        return em.createQuery("SELECT u FROM User u", User.class).getResultList();
+    public void save(User user) {
+        User managed = entityManager.merge(user);
+        entityManager.persist(managed);
     }
 
+    @Transactional
     @Override
-    public User getUser(int id) {
-        TypedQuery<User> q = em.createQuery(
-                "SELECT u FROM User u WHERE u.id = :id",
-                User.class
-        );
-        q.setParameter("id", id);
-        return q.getResultList().stream().findAny().orElse(null);
-    }
-
-    @Override
-    public void updateUser(int id, User user) {
-        em.merge(user);
+    public void delete(User user) {
+        User managed = entityManager.merge(user);
+        entityManager.remove(managed);
     }
 
     @Override
-    public void deleteUser(int id) {
-        em.remove(getUser(id));
+    public User getById(Long id) {
+        return entityManager.find(User.class, id );
     }
 
-    public User findByUsername(String username){
-        return em.createQuery("select u from User u where u.name = :name", User.class)
-                .setParameter("name",username).getSingleResult();
+    @Override
+    public User getUserByName(String username) {
+        try {
+            User user = entityManager.createQuery("SELECT u FROM User u where u.name = :name", User.class)
+                    .setParameter("name", username)
+                    .getSingleResult();
+            return user;
+        } catch (NoResultException ex) {
+            return null;
+        }
     }
-
 }

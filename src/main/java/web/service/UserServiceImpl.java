@@ -1,68 +1,65 @@
 package web.service;
 
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import web.dao.UserDao;
-import web.dao.UserDaoImpl;
+import web.dao.UserDAO;
+import web.dao.RoleDAO;
+import web.model.Role;
 import web.model.User;
+import org.springframework.stereotype.Service;
 
-import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
-
-    private final UserDao userDao;
-    private final PasswordEncoder passwordEncoder;
+    private UserDAO userDAO;
+    private RoleDAO roleDAO;
 
     @Autowired
-    public UserServiceImpl(UserDao userDao, PasswordEncoder passwordEncoder) {
-        this.userDao = userDao;
-        this.passwordEncoder = passwordEncoder;
+    PasswordEncoder bCryptPasswordEncoder;
+
+    @Autowired
+    public void setUserDAO(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
+
+    @Autowired
+    public void setRoleDAO(RoleDAO roleDAO) {
+        this.roleDAO = roleDAO;
     }
 
     @Override
-    @Transactional
-    public void addUser(User user) {
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        userDao.addUser(user);
+    public List<User> allUsers() {
+        return userDAO.allUsers();
     }
 
     @Override
-    @Transactional
-    public List<User> getAllUser() {
-        return userDao.getAllUser();
+    public void save(User user) {
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userDAO.save(user);
     }
 
     @Override
-    @Transactional
-    public User getUser(int id) {
-        return userDao.getUser(id);
+    public void delete(User user) {
+        userDAO.delete(user);
     }
 
     @Override
-    @Transactional
-    public void updateUser(int id, User user) {
-        String encryptedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encryptedPassword);
-        userDao.updateUser(id, user);
+    public User getById(Long id) {
+        return userDAO.getById(id);
     }
 
     @Override
-    @Transactional
-    public void deleteUser(int id) {
-        userDao.deleteUser(id);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        User user = userDao.findByUsername(s);
+    public UserDetails loadUserByUsername(String username) {
+        User user = userDAO.getUserByName(username);
         return user;
     }
 }
